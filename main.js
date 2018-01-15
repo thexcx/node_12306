@@ -21,14 +21,6 @@ function hasArgv(argv, filter) {
 		return filter;
 	});
 }
-let startStations = {
-	lists: [],
-	origin: {}
-};
-let endStations = {
-	lists: [],
-	origin: {}
-};
 function searchTrain(answers, input) {
 	input = input || '';
 	console.log(input);
@@ -62,17 +54,6 @@ let questions = [
 		message: '输入始发站拼音-from_station(如:shanghai)：',
 		validate(input) {
 			if (_stations.stationInfo[input]) {
-				let temp = _stations.stationInfo[input];
-				if (Object.prototype.toString.call(temp) === '[object Array]') {
-					temp.forEach((item, i) => {
-						startStations.lists.push(item.name);
-						startStations.origin[item.name] = item;
-					});
-				}
-				else {
-					startStations.lists.push(temp.name);
-					startStations.origin[temp.name] = temp;
-				}
 				return true;
 			}
 			else {
@@ -80,13 +61,6 @@ let questions = [
 				return false;
 			}
 		}
-	},
-	{
-		type: 'list',
-		name: 'from_station_',
-		message: '你选哪一个车站？',
-		choices: startStations.lists,
-		default: 0
 	},
 	{
 		type: 'input',
@@ -94,17 +68,6 @@ let questions = [
 		message: '输入终点站拼音-end_station(如:hefei)：',
 		validate(input) {
 			if (_stations.stationInfo[input]) {
-				let temp = _stations.stationInfo[input];
-				if (Object.prototype.toString.call(temp) === '[object Array]') {
-					temp.forEach((item, i) => {
-						endStations.lists.push(item.name);
-						endStations.origin[item.name] = item;
-					});
-				}
-				else {
-					endStations.lists.push(temp.name);
-					endStations.origin[temp.name] = temp;
-				}
 				return true;
 			}
 			else {
@@ -112,13 +75,6 @@ let questions = [
 				return false;
 			}
 		}
-	},
-	{
-		type: 'list',
-		name: 'end_station_',
-		message: '你选哪一个车站？',
-		choices: endStations.lists,
-		default: 0
 	},
 	{
 		type: 'input',
@@ -189,12 +145,13 @@ function getLeftTicketUrl(callback) {
 fs.readFile('config.json', 'utf-8', function (err, data) {
 	if (err || !data || isRewrite) {
 		prompt(questions).then(answer => {
-			answer.from_station = startStations.origin[answer.from_station_]|| _stations.stationInfo[answer.from_station];	
-			answer.end_station = endStations.origin[answer.end_station_] || _stations.stationInfo[answer.end_station];	
+			answer.from_station = _stations.stationInfo[answer.from_station];	
+			answer.end_station = _stations.stationInfo[answer.end_station];	
 			answer.train_num = answer.train_num.split('|');
 			answer.ticket_type = answer.ticket_type ? '0x00' : 'ADULT';
 			answer.receive_mail = answer.receive_mail || answer.your_mail;
 			config = answer;
+			console.log(config);
 			fs.writeFile('config.json', JSON.stringify(config));
 			var rule = new schedule.RecurrenceRule();
 			rule.second = [0];
@@ -324,7 +281,6 @@ function queryTickets(config) {
 				trainMap = _data && _data.map;
 			} catch (e) {
 				console.log('JSON数据出错,请检查输入配置是否正确', e);
-				console.log('出错的数据：', data);
 				return;
 			}
 			jsonData = b4(trainData, trainMap);
